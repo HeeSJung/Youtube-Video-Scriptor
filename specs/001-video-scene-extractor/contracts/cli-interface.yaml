@@ -1,0 +1,253 @@
+# CLI Interface Contract
+# YouTube Video Scene Segmentation and Script Extraction Tool
+
+openapi: 3.0.3
+info:
+  title: YouTube Scene Extractor CLI
+  description: Command-line interface for processing YouTube videos to extract scenes and transcripts
+  version: 0.1.0
+
+paths:
+  /process:
+    post:
+      summary: Process a YouTube video
+      description: Extract scenes and transcripts from a YouTube video URL
+      operationId: processVideo
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: YouTube video URL
+                  example: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                options:
+                  type: object
+                  properties:
+                    output_dir:
+                      type: string
+                      description: Output directory path
+                      default: "./output"
+                    scene_threshold:
+                      type: number
+                      format: float
+                      minimum: 20
+                      maximum: 40
+                      default: 30
+                      description: Scene detection sensitivity
+                    min_scene_duration:
+                      type: integer
+                      minimum: 5
+                      maximum: 60
+                      default: 15
+                      description: Minimum scene duration in seconds
+                    frame_skip:
+                      type: integer
+                      minimum: 1
+                      maximum: 5
+                      default: 2
+                      description: Frame skip rate for performance
+                    formats:
+                      type: array
+                      items:
+                        type: string
+                        enum: [json, markdown, text]
+                      default: [json, markdown, text]
+                      description: Output formats to generate
+
+      responses:
+        '200':
+          description: Processing successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingResult'
+
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '404':
+          description: Video not found or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '503':
+          description: YouTube service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ProcessingResult:
+      type: object
+      required:
+        - video_id
+        - status
+        - output_path
+        - scenes_detected
+        - processing_time
+      properties:
+        video_id:
+          type: string
+          description: YouTube video ID
+          example: "dQw4w9WgXcQ"
+        status:
+          type: string
+          enum: [complete, partial, failed]
+          description: Processing status
+        output_path:
+          type: string
+          description: Path to output directory
+          example: "./output/dQw4w9WgXcQ"
+        scenes_detected:
+          type: integer
+          description: Number of scenes detected
+          example: 5
+        has_captions:
+          type: boolean
+          description: Whether captions were available
+        caption_type:
+          type: string
+          enum: [manual, auto-generated, none]
+          description: Type of captions used
+        processing_time:
+          type: number
+          format: float
+          description: Processing time in seconds
+          example: 245.3
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Non-fatal issues encountered
+          example: ["Auto-generated captions may be less accurate"]
+        files_generated:
+          type: object
+          properties:
+            segments:
+              type: string
+              example: "segments.json"
+            speakers:
+              type: string
+              example: "speakers.json"
+            transcripts:
+              type: array
+              items:
+                type: string
+              example: ["scene_01.md", "scene_01.txt", "scene_02.md", "scene_02.txt"]
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: "INVALID_URL"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "The provided URL is not a valid YouTube video URL"
+        details:
+          type: object
+          description: Additional error context
+
+    Scene:
+      type: object
+      required:
+        - scene_id
+        - start_time
+        - end_time
+        - duration
+      properties:
+        scene_id:
+          type: string
+          pattern: ^scene_\d{2}$
+          example: "scene_01"
+        start_time:
+          type: number
+          format: float
+          description: Start time in seconds
+          example: 0.0
+        end_time:
+          type: number
+          format: float
+          description: End time in seconds
+          example: 45.5
+        duration:
+          type: number
+          format: float
+          description: Duration in seconds
+          example: 45.5
+        start_timecode:
+          type: string
+          pattern: ^\d{2}:\d{2}:\d{2}$
+          example: "00:00:00"
+        end_timecode:
+          type: string
+          pattern: ^\d{2}:\d{2}:\d{2}$
+          example: "00:00:45"
+
+    Speaker:
+      type: object
+      required:
+        - speaker_id
+        - label
+        - scenes
+        - line_count
+      properties:
+        speaker_id:
+          type: string
+          pattern: ^speaker_\d+$
+          example: "speaker_1"
+        label:
+          type: string
+          description: Display name for speaker
+          example: "Speaker 1"
+        scenes:
+          type: array
+          items:
+            type: string
+          description: Scene IDs where speaker appears
+          example: ["scene_01", "scene_02"]
+        first_appearance:
+          type: number
+          format: float
+          description: First appearance timestamp
+          example: 0.0
+        line_count:
+          type: integer
+          description: Total dialogue lines
+          example: 45
+
+# CLI Command Examples:
+#
+# Basic usage:
+#   python -m youtube_scene_extractor "https://www.youtube.com/watch?v=VIDEO_ID"
+#
+# With options:
+#   python -m youtube_scene_extractor "https://www.youtube.com/watch?v=VIDEO_ID" \
+#     --output-dir ./my_output \
+#     --scene-threshold 25 \
+#     --min-scene-duration 20 \
+#     --formats json,markdown
+#
+# Help:
+#   python -m youtube_scene_extractor --help
