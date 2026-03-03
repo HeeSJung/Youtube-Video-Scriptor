@@ -221,6 +221,18 @@ def validate_arguments(args: argparse.Namespace) -> None:
                 f"end_sec must be greater than start_sec, got start_sec={args.start_sec}, end_sec={args.end_sec}"
             )
 
+        # Validate segment duration (end - start), not just the end timestamp
+        segment_duration = args.end_sec - args.start_sec
+        max_duration = DEFAULT_CONFIG.processing.max_video_duration
+        if segment_duration > max_duration:
+            raise ValueError(
+                f"Requested segment duration ({segment_duration}s = "
+                f"{segment_duration / 3600:.2f} hours) exceeds the maximum of "
+                f"{max_duration}s ({max_duration // 3600} hours). "
+                f"The limit applies to the segment length (end_sec - start_sec), "
+                f"not the end timestamp alone."
+            )
+
 
 def get_video_duration(video_url: str) -> Optional[float]:
     """
@@ -370,6 +382,16 @@ def process_video(
             # Fallback: use a large duration if we can't fetch it
             logger.warning("Could not determine video duration, using full video")
             video_duration = 10800  # 3 hours fallback
+
+        max_duration = DEFAULT_CONFIG.processing.max_video_duration
+        if video_duration > max_duration:
+            raise ValueError(
+                f"Video duration ({int(video_duration)}s = {video_duration / 3600:.2f} hours) "
+                f"exceeds the maximum of {max_duration}s ({max_duration // 3600} hours) "
+                f"for automatic (full-video) processing. "
+                f"Please provide start and end timestamps to process a specific segment, e.g.: "
+                f"yt-script URL 0 {max_duration}"
+            )
 
         scene = Scene(
             scene_id="scene_01",
