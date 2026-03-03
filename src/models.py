@@ -54,14 +54,9 @@ class Video:
         if not self.url or not isinstance(self.url, str):
             raise ValueError("url must be a non-empty string")
 
-        # Validate duration (positive integer, max 3 hours = 10800 seconds)
+        # Validate duration (positive integer)
         if not isinstance(self.duration, int) or self.duration <= 0:
             raise ValueError(f"duration must be a positive integer, got {self.duration}")
-
-        if self.duration > 10800:
-            raise ValueError(
-                f"duration exceeds maximum of 10800 seconds (3 hours), got {self.duration}"
-            )
 
         # Ensure caption_type is CaptionType enum
         if isinstance(self.caption_type, str):
