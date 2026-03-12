@@ -16,6 +16,9 @@ venv/
 ENV/
 env/
 
+# AI assistant files
+CLAUDE.md
+
 # IDE and editor files
 .vscode/
 .idea/

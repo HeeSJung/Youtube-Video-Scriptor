@@ -25,7 +25,7 @@ classifiers = [
 ]
 
 [project.scripts]
-youtube-transcript-extractor = "src.main:main"
+yt-script = "src.main:main"
 
 [build-system]
 requires = ["hatchling"]

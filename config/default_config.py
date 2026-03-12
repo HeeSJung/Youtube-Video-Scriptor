@@ -15,7 +15,7 @@ class OutputFormatConfig:
     """Configuration for output formatting options"""
 
     # Output directory for generated files
-    output_dir: Path = field(default_factory=lambda: Path("./output"))
+    output_dir: Path = field(default_factory=lambda: Path("/Users/heesoojung/02 Dev/Transcripts"))
 
     # Enable JSON output (segments.json)
     enable_json: bool = True
